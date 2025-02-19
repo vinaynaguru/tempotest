@@ -15,20 +15,24 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                sh 'terraform init'
+                dir('terraform') {  // Ensuring Terraform runs inside the correct folder
+                    sh 'terraform init'
+                }
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                sh 'terraform apply -auto-approve'
+                dir('terraform') {
+                    sh 'terraform apply -auto-approve'
+                }
             }
         }
 
         stage('Update Ansible Inventory') {
             steps {
                 script {
-                    def ip = sh(script: "terraform output -raw public_ip", returnStdout: true).trim()
+                    def ip = sh(script: "cd terraform && terraform output -raw public_ip", returnStdout: true).trim()
                     sh "echo '[webserver]' > inventory"
                     sh "echo '${ip} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa' >> inventory"
                 }
